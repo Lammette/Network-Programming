@@ -16,13 +16,13 @@ class Application(tk.Frame):
         # row 1: connection stuff (and a clear-messages button)
         #-------------------------------------------------------------------
         self.groupCon = tk.LabelFrame(bd=0)
-        self.groupCon.pack(side="top")
+        self.groupCon.pack(side="top",pady=5)
         #
-        self.ipPortLbl = tk.Label(self.groupCon, text='IP:port', padx=10)
+        self.ipPortLbl = tk.Label(self.groupCon, text='Server Port', padx=10)
         self.ipPortLbl.pack(side="left")
         #
         self.ipPort = tk.Entry(self.groupCon, width=20)
-        self.ipPort.insert(tk.END, 'localhost:60003')
+        self.ipPort.insert(tk.END, '60003')
         # if the focus is on this text field and you hit 'Enter',
         # it should (try to) connect
         self.ipPort.bind('<Return>', connectHandler)
@@ -33,43 +33,85 @@ class Application(tk.Frame):
         #
         self.connectButton = tk.Button(self.groupCon,
             command = connectButtonClick, width=10)
-        self.connectButton.pack(side="left")
+        self.connectButton.pack(side="left",padx=5)
         #
         padder = tk.Label(self.groupCon, padx=1)
         padder.pack(side="left")
         #
         self.clearButton = tk.Button(self.groupCon, text='clr msg',
             command = clearButtonClick)
-        self.clearButton.pack(side="left")
+        self.clearButton.pack(side="left",padx=5)
         
         #-------------------------------------------------------------------
         # row 2: the message field (chat messages + status messages)
         #-------------------------------------------------------------------
-        self.msgText = tksctxt.ScrolledText(height=15, width=42,
+        self.msgText = tksctxt.ScrolledText(height=20, width=90,
             state=tk.DISABLED)
-        self.msgText.pack(side="top")
+        self.msgText.pack(side="top",padx=(15,0))
 
         #-------------------------------------------------------------------
         # row 3: sending messages
         #-------------------------------------------------------------------
         self.groupSend = tk.LabelFrame(bd=0)
-        self.groupSend.pack(side="top")
+        self.groupSend.pack(side="top",pady=5)
         #
-        self.textInLbl = tk.Label(self.groupSend, text='message', padx=10)
+        self.textInLbl = tk.Label(self.groupSend, text='broadcast message',width=20)
         self.textInLbl.pack(side="left")
         #
-        self.textIn = tk.Entry(self.groupSend, width=38)
+        self.textIn = tk.Entry(self.groupSend, width=40)
         # if the focus is on this text field and you hit 'Enter',
         # it should (try to) send
-        self.textIn.bind('<Return>', sendMessage)
-        self.textIn.pack(side="left")
-        #
-        padder = tk.Label(self.groupSend, padx=5)
-        padder.pack(side="left")
+        self.textIn.bind('<Return>', shout)
+        self.textIn.pack(side="left"),
         #
         self.sendButton = tk.Button(self.groupSend, text = 'send',
-            command = sendButtonClick)
-        self.sendButton.pack(side="left")
+            command = sendButtonClick,width= 5)
+        self.sendButton.pack(side="left",padx=55)
+        
+        #-------------------------------------------------------------------
+        # row 4: client list
+        #-------------------------------------------------------------------
+        self.groupClient = tk.LabelFrame(bd=0)
+        self.groupClient.pack(side="top",pady=5)
+        
+        self.textClientList = tk.Label(self.groupClient, text='Connected clients',width=20)
+        self.textClientList.pack(side="left")
+        
+        self.groupList= tk.LabelFrame(self.groupClient,width=40, bd=0)
+        self.groupList.pack(side="left",)
+        self.clientList = tk.Listbox(self.groupList,height=10, width= 40)
+        self.clientList.pack(side="left", fill = "y")
+        self.scrollbar = tk.Scrollbar(self.groupList, orient="vertical")
+        self.scrollbar.config(command=self.clientList.yview)
+        self.scrollbar.pack(side="right",fill="y")
+        
+        self.groupClientControl = tk.LabelFrame(self.groupClient, bd=0)
+        self.groupClientControl.pack(side="left")
+        
+        self.discAllButton = tk.Button(self.groupClientControl, text='Disconnect All', command = "", width= 15)
+        self.discAllButton.pack(side="top", pady = 15,padx=15)
+
+        self.discSelButton = tk.Button(self.groupClientControl, text='Disconnect Selected', command = "", width= 15)
+        self.discSelButton.pack(side="top", pady = 15,padx=15)      
+        
+        #-------------------------------------------------------------------
+        # row 5: Be weird
+        #-------------------------------------------------------------------
+        self.groupMsgClient = tk.LabelFrame(bd=0)
+        self.groupMsgClient.pack(side= "top", pady= 5)
+        
+        self.labelMsgClient = tk.Label(self.groupMsgClient, text='Message individual client',width=20)
+        self.labelMsgClient.pack(side="left")
+        
+        self.textMsgClient = tk.Entry(self.groupMsgClient, width=40)
+        # if the focus is on this text field and you hit 'Enter',
+        # it should (try to) send
+        self.textMsgClient.bind('<Return>', whisper)
+        self.textMsgClient.pack(side="left"),
+        
+        self.msgClientBtn = tk.Button(self.groupMsgClient, text='Send to selected client', command = "",)
+        self.msgClientBtn.pack(side="left", padx=15)
+        
         
         
         # set the focus on the IP and Port text field
@@ -87,14 +129,14 @@ def connectButtonClick():
 
 def sendButtonClick():
     # forward to the sendMessage method
-    sendMessage(g_app)
+    shout(g_app)
 
 # the connectHandler toggles the status between connected/disconnected
 def connectHandler(master):
-    if g_bConnected:
-        disconnect()
+    if g_bAlive:
+        shutdown()
     else:
-        tryToConnect()
+        tryToStart()
 
 # a utility method to print to the message field        
 def printToMessages(message):
@@ -106,17 +148,17 @@ def printToMessages(message):
 
 # if attempt to close the window, it is handled here
 def on_closing():
-    if g_bConnected:
+    if g_bAlive:
         if tkmsgbox.askokcancel("Quit",
-            "You are still connected. If you quit you will be"
-            + " disconnected."):
+            "Server is running. If you quit the server will be"
+            + " shutdown."):
             myQuit()
     else:
         myQuit()
 
 # when quitting, do it the nice way    
 def myQuit():
-    disconnect()
+    shutdown()
     g_root.destroy()
 
 # utility address formatting
@@ -125,7 +167,7 @@ def myAddrFormat(addr):
 
 # disconnect from server (if connected) and
 # set the state of the programm to 'disconnected'
-def disconnect():
+def shutdown():
     # we need to modify the following global variables
     global g_bConnected
     global g_sock
@@ -145,7 +187,7 @@ def disconnect():
 
     
 # attempt to connect to server    
-def tryToConnect():
+def tryToStart():
     # we need to modify the following global variables
     global g_bConnected
     global g_sock
@@ -164,7 +206,7 @@ def tryToConnect():
         g_app.connectButton['text'] = 'disconnect'
 
 # attempt to send the message (in the text field g_app.textIn) to the server
-def sendMessage(master):
+def shout(data):
 
     # your code here
     # a call to g_app.textIn.get() delivers the text field's content
@@ -175,7 +217,17 @@ def sendMessage(master):
         g_sock.send(msg)
     except:
         printToMessages("Message ERROR")
-        disconnect()
+        shutdown()
+        
+def whisper():
+    try:
+        msg = bytearray(g_app.textMsgClient.get(),"ASCII")
+        client = 
+        client.send(msg)
+    except:
+        printToMessages("A message failed to send")
+    else:
+        printToMessages
 
 # poll messages
 def pollMessages():
@@ -195,7 +247,7 @@ def pollMessages():
 
 
 # by default we are not connected
-g_bConnected = False
+g_bAlive = False
 g_sock = None
 
 # set the delay between two consecutive calls to pollMessages
@@ -206,7 +258,7 @@ g_root = tk.Tk()
 g_app = Application(master=g_root)
 
 # make sure everything is set to the status 'disconnected' at the beginning
-disconnect()
+shutdown()
 
 # schedule the next call to pollMessages
 g_root.after(g_pollFreq, pollMessages)
