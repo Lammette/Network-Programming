@@ -12,31 +12,25 @@ def server():
     s.bind((server_ip, port))    # Server stuff
     s.listen(1)
     c, _ = s.accept()
-    while m_score < 10 and o_score < 10:
-        move = input(f"({m_score},{o_score}) Your move: ")
-        if move in {"R", "P", "S"}:
-            barr = bytearray(move, "ASCII")
-            c.send(barr)
-            o_move = c.recv(1028).decode()
-            print(f"opponents move: {o_move}")
-            update_score(move, o_move)
-        else:
-            print("Invalid move")
+    rps_game(c)
     s.close()
              
 def client(host):
     s.connect((host, port))
+    rps_game(s)
+    s.close()
+    
+def rps_game(socket):
     while m_score < 10 and o_score < 10:
         move = input(f"({m_score},{o_score}) Your move: ")
         if move in {"R", "P", "S"}:
             barr = bytearray(move, "ASCII")
-            s.send(barr)
-            o_move = s.recv(1028).decode()
+            socket.send(barr)
+            o_move = socket.recv(1028).decode()
             print(f"opponents move: {o_move}")
             update_score(move, o_move)
         else:
             print("Invalid move")
-    s.close()
     
 def update_score(move, o_move):
     global m_score
@@ -58,7 +52,6 @@ def update_score(move, o_move):
             elif o_move == "P":
                 m_score += 1
 
-    
 ans = "?"
 while ans not in {"C", "S"}:
     ans = input("Do you want to be server (S) or client (C): ")
