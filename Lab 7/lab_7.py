@@ -3,7 +3,7 @@ import select
 
 port = 60003
 sockL = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sockL.bind(("", port))
+sockL.bind(("localhost", port))
 sockL.listen(1)
 
 listOfSockets = [sockL]
@@ -25,12 +25,13 @@ while True:
     else:
         data = sock.recv(2048).decode()
         client = sock.getpeername()
+        addr = ":".join(map(str,client))
         if not data:
-            msg = bytearray(f"[{client}] (disconnected)","ASCII")
+            msg = bytearray(f"[{addr}] (disconnected)","ASCII")
             sock.close()          
             listOfSockets.remove(sock)
             sendall(msg)
             
         else:
-            msg = bytearray(f"[{client}] {data}","ASCII")
+            msg = bytearray(f"[{addr}] {data}","ASCII")
             sendall(msg)

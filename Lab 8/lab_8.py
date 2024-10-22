@@ -41,7 +41,6 @@ class Application(tk.Frame):
         self.clearButton = tk.Button(self.groupCon, text='clr msg',
             command = clearButtonClick)
         self.clearButton.pack(side="left")
-
         
         #-------------------------------------------------------------------
         # row 2: the message field (chat messages + status messages)
@@ -50,7 +49,6 @@ class Application(tk.Frame):
             state=tk.DISABLED)
         self.msgText.pack(side="top")
 
-        
         #-------------------------------------------------------------------
         # row 3: sending messages
         #-------------------------------------------------------------------
@@ -125,8 +123,6 @@ def myQuit():
 def myAddrFormat(addr):
     return '{}:{}'.format(addr[0], addr[1])
 
-
-
 # disconnect from server (if connected) and
 # set the state of the programm to 'disconnected'
 def disconnect():
@@ -134,9 +130,16 @@ def disconnect():
     global g_bConnected
     global g_sock
 
-
     # your code here
-
+    if g_bConnected:
+        try:
+            g_sock.close()
+        except:
+            printToMessages("Failed to disconnect")
+        else:
+            printToMessages("Disconnected from server")
+            g_bConnected = False
+            
     # once disconnected, set buttons text to 'connect'
     g_app.connectButton['text'] = 'connect'
 
@@ -146,15 +149,19 @@ def tryToConnect():
     # we need to modify the following global variables
     global g_bConnected
     global g_sock
-
-    # your code here
-    # try to connect to the IP address and port number
-    # as indicated by the text field g_app.ipPort
-    # a call to g_app.ipPort.get() delivers the text field's content
-    # if connection successful, set the program's state to 'connected'
-    # (e.g. g_app.connectButton['text'] = 'disconnect' etc.)
-
-
+    
+    try:
+        g_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        g_sock.settimeout(0.1)
+        addr = g_app.ipPort.get().split(':')
+        g_sock.connect((addr[0],int(addr[1])))
+    except:
+        printToMessages("Failed to connect")
+    else:
+        printToMessages("Connected to server")
+        g_sock.setblocking(False)
+        g_bConnected = True
+        g_app.connectButton['text'] = 'disconnect'
 
 # attempt to send the message (in the text field g_app.textIn) to the server
 def sendMessage(master):
@@ -163,8 +170,12 @@ def sendMessage(master):
     # a call to g_app.textIn.get() delivers the text field's content
     # if a socket.error occurrs, you may want to disconnect, in order
     # to put the program into a defined state
-    pass
-
+    try:
+        msg = bytearray(g_app.textIn.get(),"ASCII")
+        g_sock.send(msg)
+    except:
+        printToMessages("Message ERROR")
+        disconnect()
 
 # poll messages
 def pollMessages():
@@ -174,9 +185,13 @@ def pollMessages():
     # your code here
     # use the recv() function in non-blocking mode
     # catch a socket.error exception, indicating that no data is available
-
-
-
+    try:
+        data = g_sock.recv(1024).decode()
+    except:
+        #no data available
+        pass
+    else:
+        printToMessages(data)
 
 
 # by default we are not connected
