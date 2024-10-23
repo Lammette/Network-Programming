@@ -192,7 +192,10 @@ def pollMessages():
             #no data available
             pass
         else:
-            printToMessages(data)
+            if data == "":  #disconnected from server
+                disconnect()
+            else:
+                printToMessages(data)
 
 
 # by default we are not connected

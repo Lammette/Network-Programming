@@ -1,0 +1,90 @@
+9.1
+
+1.
+    A = 0
+    B = 1
+    C = 2
+    = 3
+    a = 4
+    b = 5
+    c = 6
+
+2.
+    No it does not
+    >>> txt = 'ÅÄÖ'
+    >>> b = bytearray(txt, 'ASCII') 
+    Traceback (most recent call last):
+    File "<stdin>", line 1, in <module>
+    UnicodeEncodeError: 'ascii' codec can't encode characters in position 0-2: ordinal not in range(128)
+
+3.
+
+    Å = 197 (c5)
+    Ä = 196 (c4)
+    Ö = 214 (d6)
+
+4.
+
+    Å = 195 + 133 (c3,85)
+    Ä = 195 + 132 (c3,84)
+    Ö = 195 + 150 (c3,96)
+
+9.1
+
+1.
+    c.
+        String = 29091
+        bytearray = 30491
+
+        Special characters contains an extra byte like ÅÄÖ while in the string they are counted as characters
+
+2.
+    d.
+        https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=62f8b204132798d504745e690ccc20b8f0aa0677
+        (avg_sym_length - entropy) / avg_sym_length
+
+        (8-4.594)/8 = 0,425 = 42.5% max compression
+
+        30491 - 30491 * 0.425 = 17532~ bytes?
+
+4.
+    c.
+        byte = 19819
+        bits = byte * 8
+
+        source = 30491
+
+        30491 - 19819 = 10672 less bytes
+
+        35%~ smaller
+    
+    d.
+        byte = 12848
+        bits = byte * 8
+
+        30491 - 12848 = 17643 less bytes
+
+        ~58% smaller
+
+    e.
+        highest = theCopy
+        smallest = bytearr
+
+        More optimal pattern, more similar bytes = more to compress,
+        Lower entropy = more compressable
+
+5.
+    b.
+        t1 = 71 "in" "is" x2
+
+        t10 = 81 = 71 + 10 
+
+        10 extra = how many times it shold be repeated?
+    
+    c. 
+        The zip-code is shorter because the actual data is the string repeated 10 times,
+        therefore it is optimized out, instead of having raw data, just take the repeating data and say it should be repeated 10 times instead.
+        
+
+    
+    

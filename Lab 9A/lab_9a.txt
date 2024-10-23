@@ -1,0 +1,4 @@
+0.1.2
+
+    Because the first elements are of the same value, it goes the second element of the tuple, but since they are of two different types
+    it crashes because it is trying to compare 8 and (1,2) which you can't do.
