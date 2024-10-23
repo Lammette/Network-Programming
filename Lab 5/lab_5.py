@@ -27,7 +27,7 @@ def rps_game(socket):
             barr = bytearray(move, "ASCII")
             socket.send(barr)
             o_move = socket.recv(1028).decode()
-            print(f"opponents move: {o_move}")
+            print(f"(opponents move: {o_move})")
             update_score(move, o_move)
         else:
             print("Invalid move")

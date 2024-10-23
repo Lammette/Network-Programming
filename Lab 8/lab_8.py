@@ -185,13 +185,14 @@ def pollMessages():
     # your code here
     # use the recv() function in non-blocking mode
     # catch a socket.error exception, indicating that no data is available
-    try:
-        data = g_sock.recv(1024).decode()
-    except:
-        #no data available
-        pass
-    else:
-        printToMessages(data)
+    if g_sock != None:
+        try:
+            data = g_sock.recv(1024).decode()
+        except socket.error:
+            #no data available
+            pass
+        else:
+            printToMessages(data)
 
 
 # by default we are not connected

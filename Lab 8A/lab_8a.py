@@ -3,6 +3,7 @@ import tkinter as tk
 import tkinter.messagebox as tkmsgbox
 import tkinter.scrolledtext as tksctxt
 import socket
+import select
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -25,14 +26,14 @@ class Application(tk.Frame):
         self.ipPort.insert(tk.END, '60003')
         # if the focus is on this text field and you hit 'Enter',
         # it should (try to) connect
-        self.ipPort.bind('<Return>', connectHandler)
+        self.ipPort.bind('<Return>', statusHandler)
         self.ipPort.pack(side="left")
         #
         padder = tk.Label(self.groupCon, padx=5)
         padder.pack(side="left")
         #
         self.connectButton = tk.Button(self.groupCon,
-            command = connectButtonClick, width=10)
+            command = statusButtonClick, width=10)
         self.connectButton.pack(side="left",padx=5)
         #
         padder = tk.Label(self.groupCon, padx=1)
@@ -61,11 +62,11 @@ class Application(tk.Frame):
         self.textIn = tk.Entry(self.groupSend, width=40)
         # if the focus is on this text field and you hit 'Enter',
         # it should (try to) send
-        self.textIn.bind('<Return>', shout)
+        self.textIn.bind('<Return>', broadcastHandler)
         self.textIn.pack(side="left"),
         #
         self.sendButton = tk.Button(self.groupSend, text = 'send',
-            command = sendButtonClick,width= 5)
+            command = broadcastButtonClick,width= 5)
         self.sendButton.pack(side="left",padx=55)
         
         #-------------------------------------------------------------------
@@ -123,20 +124,27 @@ def clearButtonClick():
     g_app.msgText.see(tk.END)
     g_app.msgText.configure(state=tk.DISABLED)
 
-def connectButtonClick():
-    # forward to the connect handler
-    connectHandler(g_app)
+def clearMsgText():
+    g_app.msgText.delete(1.0, tk.END)
 
-def sendButtonClick():
-    # forward to the sendMessage method
-    shout(g_app)
+def statusButtonClick():
+    # forward to the connect handler
+    statusHandler(g_app)
+
+def broadcastButtonClick():
+    broadcastHandler()
+
+def broadcastHandler():
+    data = g_app.textIn.get()
+    msg = f"[Server] {data}"
+    broadcast(msg)
 
 # the connectHandler toggles the status between connected/disconnected
-def connectHandler(master):
-    if g_bAlive:
+def statusHandler(master):
+    if g_bRunning:
         shutdown()
     else:
-        tryToStart()
+        tryToOpen()
 
 # a utility method to print to the message field        
 def printToMessages(message):
@@ -148,7 +156,7 @@ def printToMessages(message):
 
 # if attempt to close the window, it is handled here
 def on_closing():
-    if g_bAlive:
+    if g_bRunning:
         if tkmsgbox.askokcancel("Quit",
             "Server is running. If you quit the server will be"
             + " shutdown."):
@@ -169,61 +177,71 @@ def myAddrFormat(addr):
 # set the state of the programm to 'disconnected'
 def shutdown():
     # we need to modify the following global variables
-    global g_bConnected
+    global g_bRunning
     global g_sock
 
     # your code here
-    if g_bConnected:
+    if g_bRunning:
         try:
             g_sock.close()
         except:
             printToMessages("Failed to disconnect")
         else:
             printToMessages("Disconnected from server")
-            g_bConnected = False
+            g_bRunning = False
             
     # once disconnected, set buttons text to 'connect'
-    g_app.connectButton['text'] = 'connect'
+    g_app.connectButton['text'] = 'open'
 
     
 # attempt to connect to server    
-def tryToStart():
+def tryToOpen():
     # we need to modify the following global variables
-    global g_bConnected
+    global g_bRunning
     global g_sock
+    global listOfSockets
+
+    g_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listOfSockets = [g_sock]
     
     try:
-        g_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         g_sock.settimeout(0.1)
-        addr = g_app.ipPort.get().split(':')
-        g_sock.connect((addr[0],int(addr[1])))
+        addr = int(g_app.ipPort.get())
+        g_sock.bind((HOST,addr))
+        g_sock.listen(5)
+        print(g_sock)
+        print(listOfSockets)
     except:
         printToMessages("Failed to connect")
     else:
-        printToMessages("Connected to server")
+        printToMessages(f"Server open on port: {addr}")
         g_sock.setblocking(False)
-        g_bConnected = True
-        g_app.connectButton['text'] = 'disconnect'
+        g_bRunning = True
+        g_app.connectButton['text'] = 'shutdown'
 
 # attempt to send the message (in the text field g_app.textIn) to the server
-def shout(data):
+def broadcast(data):
 
     # your code here
     # a call to g_app.textIn.get() delivers the text field's content
     # if a socket.error occurrs, you may want to disconnect, in order
     # to put the program into a defined state
     try:
-        msg = bytearray(g_app.textIn.get(),"ASCII")
-        g_sock.send(msg)
+        printToMessages(data)
+        msg = bytearray(data,"ASCII")
+        for c in listOfSockets[1:]:
+            c.send(msg)
     except:
-        printToMessages("Message ERROR")
+        printToMessages("(Failed to send)")
         shutdown()
+    else:
+        clearMsgText()
         
 def whisper():
     try:
         msg = bytearray(g_app.textMsgClient.get(),"ASCII")
-        client = 
-        client.send(msg)
+        #client = 
+        #client.send(msg)
     except:
         printToMessages("A message failed to send")
     else:
@@ -233,21 +251,49 @@ def whisper():
 def pollMessages():
     # reschedule the next polling event
     g_root.after(g_pollFreq, pollMessages)
-    
     # your code here
     # use the recv() function in non-blocking mode
     # catch a socket.error exception, indicating that no data is available
-    try:
-        data = g_sock.recv(1024).decode()
-    except:
-        #no data available
-        pass
-    else:
-        printToMessages(data)
+    if g_bRunning:
+        try:
+            tup = select.select(listOfSockets, [], [], 0.0)
+            sock = tup[0][0]
+            if sock== g_sock:
+                try:
+                    client, addr = g_sock.accept()
+                except:
+                    #client not accepter
+                    pass
+                else:
+                    addr = ":".join(map(str,addr))
+                    broadcast(f"[{addr}] (connected)")
+                    listOfSockets.append(client)
+            else:
+                try:
+                    data = sock.recv(1024).decode()
+                    client = sock.getpeername()
+                    addr = ":".join(map(str,client))
+                    if not data:
+                        msg = f"[{addr}] (disconnected)"
+                        sock.close()          
+                        listOfSockets.remove(sock)
+                    else:
+                        msg = f"[{addr}] {data}"   
+                except socket.error:
+                    #no data available
+                    pass
+                else:
+                    broadcast(msg)
+        except:
+            #nothing happening on socket, sock = error since tup is null
+            pass
+        
 
+
+HOST = "localhost"
 
 # by default we are not connected
-g_bAlive = False
+g_bRunning = False
 g_sock = None
 
 # set the delay between two consecutive calls to pollMessages

@@ -17,11 +17,13 @@ def sendall(msg):
 while True:
     tup = select.select(listOfSockets, [], [])
     sock = tup[0][0]
+    print(sock)
     if sock==sockL:
         (sockClient, addr) = sockL.accept()
         msg = bytearray(f"[{addr}] (connected)","ASCII")
         sendall(msg)
         listOfSockets.append(sockClient)
+        print("A Client connected")
     else:
         data = sock.recv(2048).decode()
         client = sock.getpeername()
@@ -31,6 +33,7 @@ while True:
             sock.close()          
             listOfSockets.remove(sock)
             sendall(msg)
+            print("A Client disconnected")
             
         else:
             msg = bytearray(f"[{addr}] {data}","ASCII")
