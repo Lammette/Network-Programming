@@ -9,7 +9,7 @@ class Node:
     def __str__(self):
         return "({} {})".format(self.prio, self.data)
     
-def one():
+def fileToByte():
     file = open(r"Lab 9\exempeltext.txt", "r")
     txt = file.read()
     byteArr = bytearray(txt, "utf-8")
@@ -33,17 +33,45 @@ def makeProb(histo):
 def printAndPop(pq):
     while pq.qsize()>0:
         print( pq.get() )
+        
+def req(x,n):
+    global codelength           #Add to average codelength
+    if type(n.data) == int:
+        length = len(bin(x))    #Depth of tree = bits needed to present symbol (not ASCII anymore)
+        print(length)
+        codelength += (n.prio * length) #Average codelength = Sum(probability*codelength)
+        return
+    else:
+        left, right = n.data    # Get child nodes
+        req((x+1),left)         # depth first
+        req((x+1),right)
 
-def test1():
-    norm = makeProb(makeHisto(one()))
+
+def transform():
+    arr = fileToByte()  #Bytearray
+    norm = makeProb(makeHisto(arr)) #Histogram -> Probability
     pq = queue.PriorityQueue()
-    pq.put( Node(4.0, 10) )
-    pq.put( Node(2.0, 8) )
-    pq.put( Node(5.0, 2) )
-    pq.put( Node(1.5, 8) )
-    pq.put( Node(4.0, 8) )
-    pq.put( Node(1.0, 8) )
-    pq.put( Node(3.0, (1,2)) )
-    pq.put( Node(2.0, (1,2)) )
-    printAndPop( pq)
-test1()
+    for p,b in zip(norm, range(0,256)): #Add all symbols used
+        if p != 0:
+            pq.put(Node(p,b))
+            
+    while pq.qsize() != 1:      #Huffman encoding
+        #Take 2 lowest probability leaves and bind them to a node
+        #  Queue    >      Node
+        #   []              O
+        #   []            /   \
+        #   []           O     O
+        left = pq.get()
+        right = pq.get()
+        
+        pq.put(Node(left.prio + right.prio,(left,right)))   #Put back into queue
+        
+    # pq is now a huffman encoded tree
+    
+    #Calculate average codelength
+    req(0,pq.get())
+    
+    print(codelength)
+    
+codelength = 0
+transform()
