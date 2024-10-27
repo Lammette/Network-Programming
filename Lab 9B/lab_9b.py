@@ -8,6 +8,7 @@ class Node:
         return self.prio<other.prio 
     def __str__(self):
         return "({} {})".format(self.prio, self.data)
+
     
 def fileToByte():
     file = open(r"Lab 9\exempeltext.txt", "r")
@@ -36,10 +37,12 @@ def printAndPop(pq):
         
 def req(x,n):
     global codelength           #Add to average codelength
+    global codewords
     if type(n.data) == int:
-        length = len(bin(x))    #Depth of tree = bits needed to present symbol (not ASCII anymore)
-        print(length)
+        #length = len(bin(x))    #Depth of tree = bits needed to present symbol (not ASCII anymore)
+        length = len(bin(n.data))   #ASCII
         codelength += (n.prio * length) #Average codelength = Sum(probability*codelength)
+        codewords[n.data] = length
         return
     else:
         left, right = n.data    # Get child nodes
@@ -52,13 +55,13 @@ def transform():
     norm = makeProb(makeHisto(arr)) #Histogram -> Probability
     pq = queue.PriorityQueue()
     for p,b in zip(norm, range(0,256)): #Add all symbols used
-        if p != 0:
+        if p:
             pq.put(Node(p,b))
             
     while pq.qsize() != 1:      #Huffman encoding
         #Take 2 lowest probability leaves and bind them to a node
         #  Queue    >      Node
-        #   []              O
+        #   []              O 
         #   []            /   \
         #   []           O     O
         left = pq.get()
@@ -71,7 +74,13 @@ def transform():
     #Calculate average codelength
     req(0,pq.get())
     
-    print(codelength)
+    print("Avg code length:", codelength)
+    
+    for x in range (0, 256):
+        for b,l in codewords.items():
+            if b == x:
+                print(f"byte= {b}\t({chr(b) if b >= 32 and b <= 127 else ""})\t{format(b, 'b')}{"\t" if b < 127 else ""}\tlen={l}")
     
 codelength = 0
+codewords = {}
 transform()
