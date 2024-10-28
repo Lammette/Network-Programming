@@ -1,4 +1,5 @@
 import queue
+import math
 
 class Node:
     def __init__(self, prio, data):
@@ -39,15 +40,16 @@ def req(x,n):
     global codelength           #Add to average codelength
     global codewords
     if type(n.data) == int:
-        #length = len(bin(x))    #Depth of tree = bits needed to present symbol (not ASCII anymore)
-        length = len(bin(n.data))   #ASCII
-        codelength += (n.prio * length) #Average codelength = Sum(probability*codelength)
-        codewords[n.data] = length
+        #length = len(format(n.data, 'b'))   #UTF-8 without the zeros
+        length = len(x)                     #Hoffman
+        codelength += (n.prio * length)     #Average codelength = Sum(probability*codelength)
+        codewords[n.data] = x
+        word_prio[n.data] = n.prio
         return
     else:
         left, right = n.data    # Get child nodes
-        req((x+1),left)         # depth first
-        req((x+1),right)
+        req((x + '0'),left)         # depth first
+        req((x + '1'),right)
 
 
 def transform():
@@ -72,15 +74,18 @@ def transform():
     # pq is now a huffman encoded tree
     
     #Calculate average codelength
-    req(0,pq.get())
+    req('0',pq.get())
     
     print("Avg code length:", codelength)
     
-    for x in range (0, 256):
-        for b,l in codewords.items():
-            if b == x:
-                print(f"byte= {b}\t({chr(b) if b >= 32 and b <= 127 else ""})\t{format(b, 'b')}{"\t" if b < 127 else ""}\tlen={l}")
-    
-codelength = 0
-codewords = {}
+    for x in range (0, 256):            #All ASCII characters
+        for b,l in codewords.items():   #All codewords from the hoffman tree
+                                        #b = byte in UTF-8 / ASCII
+                                        #l = hoffman byte
+            if b == x and b >= 32:      #If ASCII character if printable
+                print(f"byte= {b}\t({chr(b) if b >= 32 and b <= 127 else ""})\t{l}\t{"\t\t" if len(l) < 8 else "\t" if len(l) < 16 else ""}len={len(l)}\tlog(1/p)={math.log((1/word_prio[x]),2):.2f}")
+                
+codelength = 0 #Avg code length, sum of all probable codelengths
+codewords = {} #List of codewords from hoffman tree
+word_prio = {} #Priority for each node in the hoffman tree/codeword
 transform()

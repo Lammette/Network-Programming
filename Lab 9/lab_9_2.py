@@ -44,19 +44,21 @@ for i in range(0,len(bytearr)):
     
 random.shuffle(theCopy)
 
-print(bytearr[12])
-print(theCopy[12])
-
-
+print("The original:")
 print(entropi(makeProb(makeHisto(bytearr))))
+print("The shuffled copy:")
 print(entropi(makeProb(makeHisto(theCopy))))
 
 code = zlib.compress(theCopy)
+print("The uncompressed copy:")
 print(len(theCopy))
+print("The compressed copy:")
 print(len(code))
 
 edoc = zlib.compress(bytearr)
+print("The uncompressed original:")
 print(len(bytearr))
+print("The compressed original:")
 print(len(edoc))
 
 t1 = """I hope this lab never ends because
@@ -69,6 +71,7 @@ t20 = bytearray(t10,'ASCII')
 t3 = zlib.compress(t2)
 t30 = zlib.compress(t20)
 
+print("Last part:")
 print(len(t2))
 print(len(t3))
 print(len(t20))
