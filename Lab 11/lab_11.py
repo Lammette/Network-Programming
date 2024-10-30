@@ -45,18 +45,23 @@ try:
     
     cursor.execute(q_get_scores)
     get_scores = cursor.fetchall()
+    #[f_name,l_name,score]
     
     cursor.execute(q_most_diff)
     most_diff = cursor.fetchall()
+    #[task,total_points]
     
-    print("\n")
+    print("\nTop 10 scores")
+    print("------------------------------")
     for q in get_scores:
         f,l,s = q
         print(f"{f} {l} has {s} points")
-    print("\n")
+    print("\nTop 10 hardest tasks")
+    print("------------------------------")
     for p in most_diff:
         t,s = p
         print(f"Task:{t} had {s} total points")
+    print("\n")
     # Close the cursor
     cursor.close()
  
