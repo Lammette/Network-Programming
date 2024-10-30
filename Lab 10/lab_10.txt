@@ -1,7 +1,2 @@
-(\w+(?:\.\w+)*@\w+\.\w+)
-
-
+Task 1/2:
 re.findall(r'(\w+(?:\.\w+)*@\w[^o]\w+\.\w+(?:\.?\w+))', mtxt) mmm hardcode
-
-
-<td class="svtTablaTime">\s*(\d+\d.\d+)\s*<\/td>\s*<td.*?>\s*<h4.*?>\s*Simpsons\s*<\/h4>\s*.*\s*.* \s*.*\s*.*\s*.*\s*.*?[.]\D*(\d+)\D*(\d+)\D*(\d+)\W*(.*?)[.]

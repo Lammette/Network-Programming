@@ -4,9 +4,9 @@ txt = f.read()
 
 tabla = re.findall(r'<td class="svtTablaTime">\s*(\d+\d.\d+)\s*<\/td>\s*<td.*?>\s*<h4.*?>\s*Simpsons\s*<\/h4>\s*.*\s*.* \s*.*\s*.*\s*.*\s*.*?[.]\D*(\d+)\D*(\d+)\D*(\d+)\W*(.*?)[.]', txt )
 
-for i in range(0,len(tabla)):
+for i in tabla:
     print("--------------------")
-    print(f"Tid:\t{tabla[i][0]}")
-    print(f"Säsong:\t{tabla[i][1]}")
-    print(f"Avsnitt:{tabla[i][2]}/{tabla[i][3]}")
-    print(f"Handling: {tabla[i][4]}")
+    print(f"Tid:\t{i[0]}")
+    print(f"Säsong:\t{i[1]}")
+    print(f"Avsnitt:{i[2]}/{i[3]}")
+    print(f"Handling: {i[4]}")
