@@ -27,9 +27,8 @@ try:
    for q in query:
       cursor.execute(q)
 
-   for i in range (0,dateforwards):
-      startDate += 1
-      req = urllib.request.Request(f'https://www.svtplay.se/kanaler?date=2024-11-{startDate}')
+   for i in range (startDate,(startDate + dateforwards)):
+      req = urllib.request.Request(f'https://www.svtplay.se/kanaler?date=2024-11-{i}')
       with urllib.request.urlopen(req) as response:
          data = response.read().decode()
          channels = re.findall(r'"(ch-\w*).*?schedule.*?\[(.*?)\]', data )
